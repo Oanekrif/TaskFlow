@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="home.css?v=1.0.1">
+    <link rel="icon" type="image/x-icon" href="layer_group_icon.png">
+    <title>TaskFlow - Dashboard</title>
+    
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>TaskFlow</span>
+        </div>
+        <div class="user-info">
+            <span class="user-name" id="userName">Loading...</span>
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fa-solid fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="welcome-card">
+            <h1 id="welcomeTitle">Welcome to TaskFlow! 🚀</h1>
+            <p>Your project management solution. More features coming soon...</p>
+        </div>
+    </div>
+
+    <script src="auth.service.js?v=1.0.1"></script>
+    <script src="home.js?v=1.0.1"></script>
+</body>
+</html>
