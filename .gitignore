@@ -1,3 +1,4 @@
 .env
 *.docx
 node_modules
+.vscode
