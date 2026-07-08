@@ -59,7 +59,7 @@ router.post('/register', async (req, res) => {
             user: {
                 id: user._id,
                 fullName: user.fullName,
-                username: user.username, // Add username to response
+                username: user.username,
                 email: user.email,
             },
             message: 'User created successfully',
@@ -88,7 +88,7 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Check if user exists (by email OR username)
+        // Check if user exists
         const user = await User.findOne({
             $or: [{ email: email.toLowerCase() }, { username: email.toLowerCase() }]
         }).select('+password');

@@ -1,7 +1,3 @@
-// login.js
-// Import AuthService (for browser, you'll need to include auth.service.js first)
-// Make sure to include auth.service.js before login.js in your HTML
-
 // UI Service for handling UI interactions
 const UIService = {
     // Store original content for demo info divs
@@ -13,7 +9,7 @@ const UIService = {
         this.demoInfoDivs = [
             document.getElementById('demoInfoLogin'),
             document.getElementById('demoInfoRegister')
-        ].filter(div => div !== null); // Filter out nulls if one doesn't exist
+        ].filter(div => div !== null);
 
         this.demoInfoDivs.forEach((div, index) => {
             this.originalContents[index] = div.innerHTML;
@@ -133,17 +129,17 @@ const ValidationService = {
 const EventHandlers = {
     async handleLogin(event) {
         event.preventDefault();
-        console.log('Login form submitted'); // Add this
+        console.log('Login form submitted');
 
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
         const remember = document.getElementById('rememberCheck')?.checked || false;
 
-        console.log('Email:', email); // Add this
-        console.log('Password present:', !!password); // Add this
+        console.log('Email:', email);
+        console.log('Password present:', !!password);
 
         if (!ValidationService.validateLogin(email, password)) {
-            console.log('Validation failed'); // Add this
+            console.log('Validation failed');
             return;
         }
 
@@ -161,7 +157,7 @@ const EventHandlers = {
             );
 
             setTimeout(() => {
-                window.location.href = window.location.protocol === 'file:' ? 'home.html' : '/home.html';
+                window.location.href = window.location.protocol === 'file:' ? 'dashboard.html' : '/dashboard.html';
             }, 1500);
         } catch (error) {
             UIService.showFeedbackMessage(`❌ Login failed: ${error.message}`, true);

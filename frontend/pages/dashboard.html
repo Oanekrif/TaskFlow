@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TaskFlow | Dashboard</title>
+    <!-- Font Awesome 6 (same as home) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Google Fonts for modern look -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css?v=1.0.1">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>TaskFlow</span>
+        </div>
+        <div class="user-info">
+            <!-- Notification Icon with Dropdown -->
+            <div class="notification-container">
+                <div class="notification-icon" id="notificationIcon">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="badge" id="notificationBadge" style="display: none;">0</span>
+                </div>
+                <!-- Notification Dropdown -->
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-header">
+                        <span>Notifications</span>
+                        <button class="mark-read-btn" id="markAllReadBtn">Mark all as read</button>
+                    </div>
+                    <div class="notification-divider"></div>
+                    <div class="notification-list" id="notificationList">
+                        <div class="notification-empty">No notifications</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Dropdown -->
+            <div class="profile-container">
+                <div class="profile-btn" id="profileBtn">
+                    <span class="profile-initial" id="profileInitial">A</span>
+                    <i class="fa-solid fa-chevron-down" style="font-size: 12px; margin-left: 4px;"></i>
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-header">
+                        <div class="dropdown-avatar">
+                            <span id="dropdownInitial">A</span>
+                        </div>
+                        <div class="dropdown-user-info">
+                            <div class="dropdown-username" id="dropdownUsername">Username</div>
+                            <div class="dropdown-user-id">
+                                <span id="userIdDisplay">ID: 123456</span>
+                                <i class="fa-regular fa-copy copy-id-btn" id="copyIdBtn"
+                                    style="cursor:pointer; font-size: 14px; color: #764ba2;"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" id="logoutBtn" class="dropdown-item logout-item">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar as per mockup: Dashboard, Tasks, Projects, Teams -->
+        <div class="sidebar">
+            <div class="nav-item active" data-tab="dashboard">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item" data-tab="tasks">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Tasks</span>
+            </div>
+            <div class="nav-item" data-tab="projects">
+                <i class="fa-solid fa-diagram-project"></i>
+                <span>Projects</span>
+            </div>
+            <div class="nav-item" data-tab="teams">
+                <i class="fa-solid fa-users"></i>
+                <span>Teams</span>
+            </div>
+        </div>
+
+        <!-- Main content: dynamic sections -->
+        <div class="main-content" id="mainContent">
+            <!-- Dashboard view will be injected via JS -->
+        </div>
+    </div>
+
+    <!-- MODAL: reusable for project, task, team creation -->
+    <div id="genericModal" class="modal-overlay">
+        <div class="modal-container">
+            <h3 id="modalTitle">New Item</h3>
+            <div id="modalDynamicFields"></div>
+            <div class="modal-buttons">
+                <button class="btn-outline-sm" id="modalCancelBtn">Cancel</button>
+                <button class="btn-primary" id="modalConfirmBtn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.service.js?v=1.0.2"></script>
+    <script src="dashboard.js?v=1.0.3"></script>
+</body>
+
+</html>

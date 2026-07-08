@@ -3,51 +3,70 @@ console.log('Current hostname:', window.location.hostname);
 console.log('API URL being used:', window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : '/api');
-
-const API_URL = window.location.hostname === 'localhost' 
+    
+    const API_URL = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : '/api';
     
-// Axios-like fetch wrapper
-const api = {
-    async request(endpoint, options = {}) {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers,
-        };
-
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const response = await fetch(`${API_URL}${endpoint}`, {
-            ...options,
-            headers,
-        });
-
+    const api = {
+        
+        async request(endpoint, options = {}) {
+            
+            const token =
+            localStorage.getItem('token') ||
+            sessionStorage.getItem('token');
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+            
+            const response = await fetch(
+                `${API_URL}${endpoint}`,
+                {
+                    ...options,
+                headers
+            }
+        );
+        
         const data = await response.json();
-
+        
         if (!response.ok) {
-            throw new Error(data.message || 'Something went wrong');
+            throw new Error(
+                data.message || 'Request failed'
+            );
         }
-
+        
         return data;
     },
-
+    
+    get(endpoint) {
+        return this.request(endpoint);
+    },
+    
     post(endpoint, data) {
         return this.request(endpoint, {
             method: 'POST',
-            body: JSON.stringify(data),
+            body: JSON.stringify(data)
+        });
+    },
+    
+    put(endpoint, data) {
+        return this.request(endpoint, {
+            method: 'PUT',
+            body: JSON.stringify(data)
         });
     },
 
-    get(endpoint) {
+    delete(endpoint) {
         return this.request(endpoint, {
-            method: 'GET',
+            method: 'DELETE'
         });
-    },
+    }
 };
 
 // Auth Service
@@ -59,7 +78,7 @@ const AuthService = {
             this.logout();
             return false;
         }
-
+        
         try {
             const result = await api.get('/auth/verify-token');
             if (result.success) {
@@ -73,7 +92,7 @@ const AuthService = {
         }
         return false;
     },
-
+    
     // Login user
     async login(email, password, remember) {
         const result = await api.post('/auth/login', { email, password });
@@ -89,41 +108,40 @@ const AuthService = {
         
         return result;
     },
-
+    
     // Register user
     async register(userData) {
         const result = await api.post('/auth/register', userData);
         return result;
     },
-
+    
     // Logout user
     logout() {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         sessionStorage.removeItem('token');
     },
-
+    
     // Get current user
     getCurrentUser() {
         const user = localStorage.getItem('user');
         return user ? JSON.parse(user) : null;
     },
-
+    
     // Get token
     getToken() {
         return localStorage.getItem('token') || sessionStorage.getItem('token');
     },
-
+    
     // Redirect to home if logged in
     async redirectIfLoggedIn() {
         const isLoggedIn = await this.checkAuth();
         if (isLoggedIn) {
-            window.location.href = window.location.protocol === 'file:' ? 'home.html' : '/home.html';
+            window.location.href = window.location.protocol === 'file:' ? 'dashboard.html' : '/dashboard.html';
         }
     }
 };
 
+
 // Export for use in other files
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { AuthService, api };
-}
+// export { AuthService, api };
