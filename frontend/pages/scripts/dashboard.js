@@ -147,7 +147,7 @@ const DashboardAPI = {
     async markNotificationRead(notificationId) {
         try {
             const res = await api.put(`/notifications/${notificationId}/read`);
-            return res.data?.notification || null;
+            return res.data?.notification || res.notification || null;
         } catch (error) {
             console.error('Error marking notification as read:', error);
             return null;
@@ -509,6 +509,25 @@ function renderDashboard() {
     `;
 }
 
+function getProjectPermissions(proj) {
+    const currentUser = AuthService.getCurrentUser();
+    if (!currentUser) return { canEdit: false, canDelete: false };
+
+    const currentUserId = currentUser._id;
+
+    const isProjectOwner = (proj.owner?._id || proj.owner) === currentUserId;
+
+    const team = proj.team; // populated object from backend, or null
+    const isTeamOwner = team && (team.owner?._id || team.owner) === currentUserId;
+    const isTeamMember = team && Array.isArray(team.members) &&
+        team.members.some(m => (m._id || m) === currentUserId);
+
+    return {
+        canEdit: isProjectOwner || isTeamOwner, // || isTeamMember
+        canDelete: isProjectOwner || isTeamOwner
+    };
+}
+
 function renderProjects() {
     return `
         <div class="section-card">
@@ -518,7 +537,7 @@ function renderProjects() {
             </div>
             <div class="projects-grid">
                 ${appData.projects.map(proj => {
-        const isOwner = proj.owner === AuthService.getCurrentUser()?._id;
+        const { canEdit, canDelete } = getProjectPermissions(proj);
         return `
                         <div class="project-card" data-id="${proj._id}">
                             <div class="project-title">${escapeHtml(proj.name)}</div>
@@ -526,12 +545,9 @@ function renderProjects() {
                             <div class="badge">${proj.status || 'active'}</div>
                             ${proj.team ? `<span class="badge">TEAM PROJECT</span>` : ''}
                             <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
-                                ${isOwner ? `
-                                    <i class="fa-regular fa-pen-to-square edit-project" data-id="${proj._id}" style="cursor:pointer; color:#4a6fa5;"></i>
-                                    <i class="fa-regular fa-trash-can delete-project" data-id="${proj._id}" style="cursor:pointer; color:#a0517a;"></i>
-                                ` : `
-                                    <span style="font-size: 12px; color: #888;">View only</span>
-                                `}
+                                ${canEdit ? `<i class="fa-regular fa-pen-to-square edit-project" data-id="${proj._id}" style="cursor:pointer; color:#4a6fa5;"></i>` : ''}
+                                ${canDelete ? `<i class="fa-regular fa-trash-can delete-project" data-id="${proj._id}" style="cursor:pointer; color:#a0517a;"></i>` : ''}
+                                ${!canEdit && !canDelete ? `<span style="font-size: 12px; color: #888;">View only</span>` : ''}
                             </div>
                         </div>
                     `;
@@ -895,7 +911,12 @@ async function attachEventListeners() {
 
             const currentUser = AuthService.getCurrentUser();
             const project = appData.projects.find(p => p._id === task.project?._id);
-            const team = project?.team ? appData.teams.find(t => t._id === project.team) : null;
+            // const team = project?.team ? appData.teams.find(t => t._id === project.team) : null;
+            const team = project?.team || null;
+
+            console.log("Project:", project);
+            console.log("Team:", team);
+            console.log("Members:", team?.members);
 
             const userMap = new Map();
 
@@ -930,7 +951,16 @@ async function attachEventListeners() {
                             }
                         } else if (typeof m === 'string') {
                             memberId = m;
-                            memberName = `User ${m.slice(-6)}`;
+
+                            // Try to find the user in the loaded tasks
+                            const user = appData.tasks.find(t =>
+                                t.assignedTo &&
+                                String(t.assignedTo._id) === String(memberId)
+                            )?.assignedTo;
+
+                            memberName = user
+                                ? (user.username || user.fullName || user.name)
+                                : `User ${m.slice(-6)}`;
                         } else {
                             return;
                         }
@@ -987,8 +1017,8 @@ async function attachEventListeners() {
                     }).join('')
                 }
                 </select>
-                ${team ? `<p style="font-size: 12px; color: #666; margin-top: 4px;">Team: ${escapeHtml(team.name)}</p>` : ''}
-                <p style="font-size: 11px; color: #999; margin-top: 4px;">${availableUsers.length} users available</p>
+                <!--${team ? `<p style="font-size: 12px; color: #666; margin-top: 4px;">Team: ${escapeHtml(team.name)}</p>` : ''}
+                <p style="font-size: 11px; color: #999; margin-top: 4px;">${availableUsers.length} users available</p>-->
             </div>
         `, async () => {
                 const title = document.getElementById('editTaskTitle').value;
@@ -1064,7 +1094,7 @@ async function attachEventListeners() {
 
             this.setAttribute('data-old-status', oldStatus);
 
-            console.log('🔄 Status change:', { taskId, newStatus, oldStatus });
+            // console.log('Status change:', { taskId, newStatus, oldStatus });
 
             try {
                 this.style.opacity = '0.6';

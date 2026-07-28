@@ -1,3 +1,4 @@
+// models/Notification
 const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
@@ -9,7 +10,7 @@ const notificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['assignment', 'task_update', 'status_change', 'title_change', 'due_date_change', 'description_change', 'unassigned'],
+        enum: ['assignment', 'task_update', 'status_change', 'title_change', 'due_date_change', 'description_change', 'unassigned', 'team_invite', 'project_created'],
         required: true
     },
     title: {

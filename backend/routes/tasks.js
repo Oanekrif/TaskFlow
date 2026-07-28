@@ -1,3 +1,4 @@
+// routes/tasks
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
@@ -10,7 +11,7 @@ const { protect } = require('../middleware/auth');
 router.get('/', protect, async (req, res) => {
     try {
         const { project, assignedTo, status } = req.query;
-        
+
         let query = {
             $or: [
                 { owner: req.user._id },
@@ -75,7 +76,7 @@ router.post('/', protect, async (req, res) => {
             if (team) {
                 const isTeamOwner = team.owner.toString() === req.user._id.toString();
                 const isTeamMember = team.members.some(
-                    m => m._id.toString() === req.user._id.toString()
+                    m => m.toString() === req.user._id.toString()
                 );
                 canCreate = isTeamOwner || isTeamMember;
             }
@@ -161,7 +162,7 @@ router.put('/:id', protect, async (req, res) => {
         // Track changes
         const changes = [];
         const updates = {};
-        
+
         // Helper to track changes
         const trackChange = (field, oldValue, newValue) => {
             if (oldValue !== undefined && newValue !== undefined && String(oldValue) !== String(newValue)) {
@@ -184,25 +185,25 @@ router.put('/:id', protect, async (req, res) => {
                 updates.title = req.body.title;
             }
         }
-        
+
         if (req.body.description !== undefined) {
             if (trackChange('description', task.description, req.body.description)) {
                 updates.description = req.body.description;
             }
         }
-        
+
         if (req.body.dueDate !== undefined) {
             if (trackChange('dueDate', task.dueDate, req.body.dueDate)) {
                 updates.dueDate = req.body.dueDate;
             }
         }
-        
+
         if (req.body.status !== undefined) {
             if (trackChange('status', task.status, req.body.status)) {
                 updates.status = req.body.status;
             }
         }
-        
+
         // Only owner can change assignment
         if (isOwner && req.body.assignedTo !== undefined) {
             const oldAssigned = task.assignedTo ? task.assignedTo._id.toString() : null;
@@ -241,10 +242,10 @@ router.put('/:id', protect, async (req, res) => {
         // Create notif if there were changes
         if (changes.length > 0) {
             console.log('🔔 Creating notifications for changes...');
-            
+
             // Get the project info
             const project = await Project.findById(task.project._id);
-            
+
             // Create change summary for notification
             const changeSummary = changes.map(c => {
                 const fieldNames = {
@@ -266,14 +267,14 @@ router.put('/:id', protect, async (req, res) => {
             if (task.assignedTo && task.assignedTo._id.toString() !== userWhoChanged) {
                 notifyUsers.add(task.assignedTo._id.toString());
             }
-            
+
             if (project && project.owner) {
                 const projectOwnerId = project.owner.toString();
                 if (projectOwnerId !== userWhoChanged) {
                     notifyUsers.add(projectOwnerId);
                 }
             }
-            
+
             if (task.owner && task.owner._id.toString() !== userWhoChanged) {
                 notifyUsers.add(task.owner._id.toString());
             }
@@ -292,7 +293,7 @@ router.put('/:id', protect, async (req, res) => {
                 if (assignmentChange) {
                     const oldAssigned = assignmentChange.oldValue;
                     const newAssigned = assignmentChange.newValue;
-                    
+
                     if (newAssigned === userIdToNotify) {
                         notificationType = 'assignment';
                         notificationTitle = '📋 New Task Assigned';
@@ -317,7 +318,7 @@ router.put('/:id', protect, async (req, res) => {
                 // Skip if the notification is for the person who made the change
                 if (userIdToNotify !== userWhoChanged) {
                     console.log(`📨 Creating notification for user ${userIdToNotify}:`, notificationTitle);
-                    
+
                     try {
                         const newNotification = await Notification.create({
                             userId: userIdToNotify,
@@ -335,7 +336,7 @@ router.put('/:id', protect, async (req, res) => {
                     }
                 }
             }
-            
+
         } else {
             console.log('ℹNo changes detected, skipping notifications');
         }

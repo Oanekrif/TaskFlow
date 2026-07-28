@@ -4,6 +4,8 @@ const router = express.Router();
 const Team = require('../models/Team');
 const Project = require('../models/Project');
 const { protect } = require('../middleware/auth');
+const Task = require('../models/Task');
+const Notification = require('../models/Notification');
 
 // GET all teams
 router.get('/', protect, async (req, res) => {
@@ -14,9 +16,9 @@ router.get('/', protect, async (req, res) => {
                 { members: req.user._id }
             ]
         })
-        .populate('members', 'username name email fullName')
-        .populate('owner', 'username name email fullName')
-        .sort({ createdAt: -1 });
+            .populate('members', 'username name email fullName')
+            .populate('owner', 'username name email fullName')
+            .sort({ createdAt: -1 });
 
         res.json({
             success: true,
@@ -41,8 +43,8 @@ router.get('/:id', protect, async (req, res) => {
                 { members: req.user._id }
             ]
         })
-        .populate('members', 'username name email fullName')
-        .populate('owner', 'username name email fullName');
+            .populate('members', 'username name email fullName')
+            .populate('owner', 'username name email fullName');
 
         if (!team) {
             return res.status(404).json({
@@ -76,7 +78,6 @@ router.post('/', protect, async (req, res) => {
             });
         }
 
-        // Handle members - simple array of IDs
         let memberIds = [];
         if (members) {
             if (typeof members === 'string') {
@@ -86,7 +87,6 @@ router.post('/', protect, async (req, res) => {
             }
         }
 
-        // Remove owner if in members list
         memberIds = memberIds.filter(id => id.toString() !== req.user._id.toString());
 
         const team = await Team.create({
@@ -98,6 +98,19 @@ router.post('/', protect, async (req, res) => {
 
         await team.populate('members', 'username email name fullName');
         await team.populate('owner', 'username email name fullName');
+
+        // Notify every member that they were added to a new team
+        const creatorName = req.user.fullName || req.user.username || 'Someone';
+        await Promise.all(memberIds.map(memberId =>
+            Notification.create({
+                userId: memberId,
+                type: 'team_invite',
+                title: '👥 Added to Team',
+                message: `${creatorName} added you to the team "${team.name}"`,
+                changedBy: req.user._id,
+                read: false
+            })
+        ));
 
         res.status(201).json({
             success: true,
@@ -116,7 +129,7 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
     try {
         const { name, role, members, addMembers, removeMembers } = req.body;
-        
+
         const team = await Team.findOne({
             _id: req.params.id,
             owner: req.user._id
@@ -131,7 +144,7 @@ router.put('/:id', protect, async (req, res) => {
 
         if (name) team.name = name;
         if (role) team.role = role;
-        
+
         if (members) {
             let memberIds = [];
             if (typeof members === 'string') {
@@ -145,16 +158,32 @@ router.put('/:id', protect, async (req, res) => {
 
         if (addMembers) {
             const newMembers = Array.isArray(addMembers) ? addMembers : [addMembers];
+            const actuallyNew = [];
             newMembers.forEach(memberId => {
                 if (!team.members.some(m => m.toString() === memberId.toString())) {
                     team.members.push(memberId);
+                    actuallyNew.push(memberId);
                 }
             });
+
+            if (actuallyNew.length > 0) {
+                const actorName = req.user.fullName || req.user.username || 'Someone';
+                await Promise.all(actuallyNew.map(memberId =>
+                    Notification.create({
+                        userId: memberId,
+                        type: 'team_invite',
+                        title: '👥 Added to Team',
+                        message: `${actorName} added you to the team "${team.name}"`,
+                        changedBy: req.user._id,
+                        read: false
+                    })
+                ));
+            }
         }
 
         if (removeMembers) {
             const removeIds = Array.isArray(removeMembers) ? removeMembers : [removeMembers];
-            team.members = team.members.filter(m => 
+            team.members = team.members.filter(m =>
                 !removeIds.some(id => id.toString() === m.toString())
             );
         }
@@ -191,15 +220,22 @@ router.delete('/:id', protect, async (req, res) => {
             });
         }
 
-        // Remove team reference from projects
-        await Project.updateMany(
-            { team: req.params.id },
-            { team: null }
-        );
+        // Find all projects under this team before deleting them
+        const teamProjects = await Project.find({ team: req.params.id });
+        const projectIds = teamProjects.map(p => p._id);
+
+        // Delete all those projects
+        await Project.deleteMany({ team: req.params.id });
+
+        // Delete all tasks under those projects
+        await Task.deleteMany({ project: { $in: projectIds } });
+
+        // Clean up related notifications
+        await Notification.deleteMany({ projectId: { $in: projectIds } });
 
         res.json({
             success: true,
-            message: 'Team deleted successfully',
+            message: 'Team and all associated projects/tasks deleted successfully',
             id: req.params.id
         });
     } catch (error) {
